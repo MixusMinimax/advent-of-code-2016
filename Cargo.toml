@@ -19,7 +19,7 @@ path = "d01/d01.rs"
 #serde_json = "1.0.145"
 #serde_yaml = "0.9.33"
 #strsim = { version = "0.11.1" }
-#vecmath = "1.0.0"
+vecmath = "1.0.0"
 
 [profile.dev]
 opt-level = 0
