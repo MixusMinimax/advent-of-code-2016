@@ -5,7 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "d01"
-path = "d01/d01.rs"
+path = "src/d01.rs"
 
 [dependencies]
 #anyhow = "1.0.100"

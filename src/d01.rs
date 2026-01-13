@@ -109,7 +109,7 @@ fn dist_from_0(pos: [i32; 2]) -> i32 {
 }
 
 fn main() {
-    let input = include_str!("input.txt");
+    let input = include_str!("d01.txt");
     // let input = "R8, R4, R4, R8";
     let instructions = parse_instructions(input).unwrap();
     let final_state = instructions.iter().copied().fold(State::default(), execute);
