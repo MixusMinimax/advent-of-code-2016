@@ -7,6 +7,10 @@ edition = "2024"
 name = "d01"
 path = "src/d01.rs"
 
+[[bin]]
+name = "d02"
+path = "src/d02.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 #indicatif = "0.18.3"
