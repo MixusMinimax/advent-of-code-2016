@@ -1,17 +1,13 @@
 use std::ops::{Index, IndexMut};
 use std::slice;
 
-const COUNT: usize = (b'z' - b'a') as usize + 1;
+pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 type Entry<Value> = (char, Value);
-type Entries<Value> = [Entry<Value>; COUNT];
+type Entries<Value> = [Entry<Value>; ALPHABET_COUNT];
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct AlphabetMap<Value> {
     entries: Entries<Value>,
-}
-
-impl<Value> AlphabetMap<Value> {
-    pub const COUNT: usize = (b'z' - b'a') as usize + 1;
 }
 
 impl<Value> IntoIterator for AlphabetMap<Value> {
@@ -26,7 +22,7 @@ impl<Value> IntoIterator for AlphabetMap<Value> {
 impl<Value: Default> AlphabetMap<Value> {
     pub fn new() -> Self {
         let mut entries = Entries::<Value>::default();
-        for (i, entry) in entries.iter_mut().enumerate().take(COUNT) {
+        for (i, entry) in entries.iter_mut().enumerate().take(ALPHABET_COUNT) {
             entry.0 = (b'a' + i as u8) as char
         }
         Self { entries }

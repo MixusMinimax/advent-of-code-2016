@@ -1,6 +1,6 @@
 #![feature(array_try_from_fn)]
 
-use aoc2016::AlphabetMap;
+use aoc2016::{ALPHABET_COUNT, AlphabetMap};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::array::from_fn;
@@ -35,7 +35,7 @@ impl<'s> TryFrom<&'s str> for Room<'s> {
 
 fn calculate_checksum(name: &str) -> [char; 5] {
     const {
-        assert!(AlphabetMap::<usize>::COUNT >= 5);
+        assert!(ALPHABET_COUNT >= 5);
     }
     let mut counts = AlphabetMap::<usize>::new();
     for c in name.chars() {
@@ -50,22 +50,48 @@ fn calculate_checksum(name: &str) -> [char; 5] {
     from_fn(|_| it.next().unwrap())
 }
 
+pub fn decrypt_string(encrypted: &str, by: u32) -> String {
+    encrypted
+        .chars()
+        .map(|c| {
+            if c == '-' {
+                ' '
+            } else {
+                (((((c as u8 - b'a') as u32 + by) % ALPHABET_COUNT as u32) as u8) + b'a') as char
+            }
+        })
+        .collect()
+}
+
 impl Room<'_> {
     fn is_valid(&self) -> bool {
         calculate_checksum(self.name) == self.checksum
+    }
+
+    fn decrypt_name(&self) -> String {
+        decrypt_string(self.name, self.sector_id)
     }
 }
 
 fn main() {
     let input = include_str!("d04.txt");
-    let sector_sum: u32 = input
+    let valid_rooms: Vec<_> = input
         .lines()
         .map(Room::try_from)
         .map(Result::unwrap)
         .filter(Room::is_valid)
-        .map(|r| r.sector_id)
-        .sum();
+        .collect();
+    let sector_sum: u32 = valid_rooms.iter().map(|r| r.sector_id).sum();
     println!("Part1: {}", sector_sum);
+
+    let north_pole_storage = valid_rooms
+        .into_iter()
+        // .inspect(|r| {
+        //     println!("{:?} = {}", r, r.decrypt_name());
+        // })
+        .find(|r| r.decrypt_name() == "northpole object storage")
+        .unwrap();
+    println!("Part2: {}", north_pole_storage.sector_id);
 }
 
 #[cfg(test)]
@@ -115,6 +141,14 @@ mod tests {
             ]
             .map(|s| Room::try_from(s).unwrap().is_valid()),
             [true, true, true, false]
+        );
+    }
+
+    #[test]
+    fn test_decrypt() {
+        assert_eq!(
+            decrypt_string("qzmt-zixmtkozy-ivhz", 343),
+            "very encrypted name"
         );
     }
 }
