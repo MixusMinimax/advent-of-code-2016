@@ -1,5 +1,5 @@
+use std::iter::{IntoIterator, Iterator};
 use std::ops::{Index, IndexMut};
-use std::slice;
 
 pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 type Entry<Value> = (char, Value);
@@ -16,6 +16,16 @@ impl<Value> IntoIterator for AlphabetMap<Value> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.entries.into_iter()
+    }
+}
+
+impl<Value: Default> FromIterator<Entry<Value>> for AlphabetMap<Value> {
+    fn from_iter<T: IntoIterator<Item = Entry<Value>>>(iter: T) -> Self {
+        let mut result = Self::new();
+        for (k, v) in iter {
+            result[k] = v;
+        }
+        result
     }
 }
 
@@ -36,18 +46,32 @@ impl<Value: Default> Default for AlphabetMap<Value> {
 }
 
 impl<Value> AlphabetMap<Value> {
-    pub fn iter(&self) -> slice::Iter<'_, Entry<Value>> {
+    pub fn iter(&self) -> impl Iterator<Item = &'_ Entry<Value>> {
         self.entries.iter()
     }
 
-    pub fn iter_mut(&mut self) -> slice::IterMut<'_, Entry<Value>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &'_ mut Entry<Value>> {
         self.entries.iter_mut()
+    }
+
+    pub fn into_keys(self) -> impl Iterator<Item = char> {
+        self.entries.into_iter().map(|(k, _)| k)
+    }
+
+    pub fn into_values(self) -> impl Iterator<Item = Value> {
+        self.entries.into_iter().map(|(_, v)| v)
     }
 }
 
-impl<Value> From<Entries<Value>> for AlphabetMap<Value> {
-    fn from(value: Entries<Value>) -> Self {
+impl<Value> AlphabetMap<Value> {
+    pub fn from_entries_unchecked(value: Entries<Value>) -> Self {
         AlphabetMap { entries: value }
+    }
+}
+
+impl<Value: Default, const N: usize> From<[(char, Value); N]> for AlphabetMap<Value> {
+    fn from(value: [(char, Value); N]) -> Self {
+        Self::from_iter(value)
     }
 }
 
@@ -72,5 +96,22 @@ impl<Value> IndexMut<char> for AlphabetMap<Value> {
         assert!(index >= 'a');
         assert!(index <= 'z');
         &mut self.entries[(index as u8 - b'a') as usize].1
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_hash_map_conversion() {
+        let m = HashMap::from([('x', 5usize), ('b', 7usize)]);
+        let am: AlphabetMap<_> = m.into_iter().collect();
+        assert_eq!(am['b'], 7);
+        assert_eq!(am['x'], 5);
+        let m: HashMap<_, _> = am.into_iter().collect();
+        assert_eq!(m[&'b'], 7);
+        assert_eq!(m[&'x'], 5);
     }
 }
