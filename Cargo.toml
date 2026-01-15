@@ -31,10 +31,14 @@ path = "src/d05.rs"
 name = "d06"
 path = "src/d06.rs"
 
+[[bin]]
+name = "d07"
+path = "src/d07.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 #indicatif = "0.18.3"
-#itertools = "0.14.0"
+itertools = "0.14.0"
 lazy_static = "1.5.0"
 md-5 = "0.10.6"
 #nom = "8.0.0"
