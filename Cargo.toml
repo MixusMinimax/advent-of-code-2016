@@ -23,12 +23,16 @@ path = "src/d03.rs"
 name = "d04"
 path = "src/d04.rs"
 
+[[bin]]
+name = "d05"
+path = "src/d05.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 #indicatif = "0.18.3"
 #itertools = "0.14.0"
 lazy_static = "1.5.0"
-#md-5 = "0.10.6"
+md-5 = "0.10.6"
 #nom = "8.0.0"
 regex = "1.12.2"
 #serde = { version = "1.0.228", features = ["derive"] }

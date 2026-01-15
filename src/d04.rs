@@ -86,9 +86,6 @@ fn main() {
 
     let north_pole_storage = valid_rooms
         .into_iter()
-        // .inspect(|r| {
-        //     println!("{:?} = {}", r, r.decrypt_name());
-        // })
         .find(|r| r.decrypt_name() == "northpole object storage")
         .unwrap();
     println!("Part2: {}", north_pole_storage.sector_id);
