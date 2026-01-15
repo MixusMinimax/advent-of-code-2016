@@ -35,6 +35,10 @@ path = "src/d06.rs"
 name = "d07"
 path = "src/d07.rs"
 
+[[bin]]
+name = "d08"
+path = "src/d08.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 #indicatif = "0.18.3"
