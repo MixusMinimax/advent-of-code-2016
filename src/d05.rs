@@ -1,25 +1,27 @@
 use md5::{Digest, Md5};
-use std::fmt::Write;
+use std::io::Write;
 
 #[inline(always)]
 fn char_from_half_byte(hex: u8) -> u8 {
     b"0123456789abcdef"[(hex & 0x0f) as usize]
 }
 
-fn get_password_1(input: &str) -> String {
-    let mut buf = String::new();
+fn get_password_1(input: &[u8]) -> String {
+    let mut buf = Vec::new();
     let mut result = Vec::new();
     for i in 0u64.. {
         // I do this instead of format! because .clear does not touch the capacity.
         // Therefore, if the resulting string is the same length as before (as is the case almost
         // all the time), there will be no allocations.
         buf.clear();
-        write!(&mut buf, "{}{}", input, i).unwrap();
-        let hash = Md5::digest(buf.as_bytes());
+        buf.extend_from_slice(input);
+        write!(&mut buf, "{}", i).unwrap();
+        let hash = Md5::digest(&buf);
         if hash[0] == 0 && hash[1] == 0 && (hash[2] & 0xf0) == 0 {
             result.push(char_from_half_byte(hash[2] & 0x0f));
             if result.len() == 8 {
                 unsafe {
+                    // this is fine because we know that every byte is from /[0-9]|[a-f]/.
                     return String::from_utf8_unchecked(result);
                 }
             }
@@ -28,14 +30,15 @@ fn get_password_1(input: &str) -> String {
     unreachable!()
 }
 
-fn get_password_2(input: &str) -> String {
-    let mut buf = String::new();
+fn get_password_2(input: &[u8]) -> String {
+    let mut buf = Vec::new();
     let mut char_count = 0;
     let mut result = [0u8; 8];
     for i in 0u64.. {
         buf.clear();
-        write!(&mut buf, "{}{}", input, i).unwrap();
-        let hash = Md5::digest(buf.as_bytes());
+        buf.extend_from_slice(input);
+        write!(&mut buf, "{}", i).unwrap();
+        let hash = Md5::digest(&buf);
         if hash[0] == 0
             && hash[1] == 0
             && (hash[2] & 0xf0) == 0
@@ -58,8 +61,8 @@ fn get_password_2(input: &str) -> String {
 }
 
 fn main() {
-    // let input = "abc";
-    let input = "ffykfhsq";
+    // let input = b"abc";
+    let input = b"ffykfhsq";
     let password = get_password_1(input);
     println!("Part1: {}", password);
 
