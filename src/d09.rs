@@ -25,14 +25,14 @@ fn parse_marker(it: impl Iterator<Item = u8>) -> Marker {
                 b'x' => {
                     state = State::ParsingRep;
                 }
-                _ => panic!("expected [0-9], got '{c}'"),
+                _ => panic!("expected [0-9x], got '{c}'"),
             },
             State::ParsingRep => match c {
                 b'0'..=b'9' => {
                     out.rep = out.rep * 10 + (c - b'0') as usize;
                 }
                 b')' => return out,
-                _ => panic!("expected [0-9], got '{c}'"),
+                _ => panic!("expected [0-9)], got '{c}'"),
             },
         }
     }
