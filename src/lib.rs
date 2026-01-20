@@ -131,6 +131,7 @@ pub mod index_map {
     use std::error::Error;
     use std::fmt::{Debug, Formatter};
     use std::marker::PhantomData;
+    use std::ops::Index;
 
     trait Key:
         From<u8> + Default + TryFrom<usize, Error: Error> + TryInto<usize, Error: Error>
@@ -236,6 +237,14 @@ pub mod index_map {
             if self.data.len() < size {
                 self.data.resize_with(size, || None)
             }
+        }
+    }
+
+    impl<K: Key, V> Index<K> for IndexMap<K, V> {
+        type Output = V;
+
+        fn index(&self, index: K) -> &Self::Output {
+            self.get(index).unwrap()
         }
     }
 }

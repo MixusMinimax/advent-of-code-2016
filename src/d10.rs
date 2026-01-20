@@ -148,7 +148,7 @@ fn main() {
     }
 
     // println!("{bots:?}");
-    println!("{outputs:?}");
+    // println!("{outputs:?}");
 
     let important_bot = bots.values().find(|bot| {
         matches!(
@@ -161,5 +161,7 @@ fn main() {
         )
     });
 
-    println!("{important_bot:?}");
+    println!("Important bot: {important_bot:?}");
+
+    println!("Part2: {}", outputs[0] * outputs[1] * outputs[2]);
 }
