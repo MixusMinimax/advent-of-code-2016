@@ -247,4 +247,109 @@ pub mod index_map {
             self.get(index).unwrap()
         }
     }
+
+    pub struct IntoIter<K: Key, V>(
+        <Vec<Option<V>> as IntoIterator>::IntoIter,
+        usize,
+        PhantomData<K>,
+    );
+
+    impl<K: Key, V> Iterator for IntoIter<K, V> {
+        type Item = (K, V);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let (diff, v) = self
+                .0
+                .by_ref()
+                .enumerate()
+                .flat_map(|(i, v)| v.map(|v| (i, v)))
+                .next()?;
+            self.1 += diff + 1;
+            Some(((self.1 - 1).try_into().unwrap(), v))
+        }
+    }
+
+    pub struct Iter<'a, K: Key, V>(
+        <&'a [Option<V>] as IntoIterator>::IntoIter,
+        usize,
+        PhantomData<K>,
+    );
+
+    impl<'a, K: Key, V> Iterator for Iter<'a, K, V> {
+        type Item = (K, &'a V);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let (diff, v) = self
+                .0
+                .by_ref()
+                .enumerate()
+                .flat_map(|(i, v)| v.as_ref().map(|v| (i, v)))
+                .next()?;
+            self.1 += diff + 1;
+            Some(((self.1 - 1).try_into().unwrap(), v))
+        }
+    }
+
+    pub struct IterMut<'a, K: Key, V>(
+        <&'a mut [Option<V>] as IntoIterator>::IntoIter,
+        usize,
+        PhantomData<K>,
+    );
+
+    impl<'a, K: Key, V> Iterator for IterMut<'a, K, V> {
+        type Item = (K, &'a mut V);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let (diff, v) = self
+                .0
+                .by_ref()
+                .enumerate()
+                .flat_map(|(i, v)| v.as_mut().map(|v| (i, v)))
+                .next()?;
+            self.1 += diff + 1;
+            Some(((self.1 - 1).try_into().unwrap(), v))
+        }
+    }
+
+    impl<K: Key, V> IntoIterator for IndexMap<K, V> {
+        type Item = (K, V);
+        type IntoIter = IntoIter<K, V>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            IntoIter(self.data.into_iter(), 0, PhantomData)
+        }
+    }
+
+    impl<'a, K: Key, V> IntoIterator for &'a IndexMap<K, V> {
+        type Item = (K, &'a V);
+        type IntoIter = Iter<'a, K, V>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            Iter(self.data.iter(), 0, PhantomData)
+        }
+    }
+
+    impl<'a, K: Key, V> IntoIterator for &'a mut IndexMap<K, V> {
+        type Item = (K, &'a mut V);
+        type IntoIter = IterMut<'a, K, V>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            IterMut(self.data.iter_mut(), 0, PhantomData)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_into_iter() {
+            let mut map = IndexMap::new();
+            map.insert(2u32, "Hello");
+            map.insert(5u32, "World");
+            map.insert(3u32, ", ");
+            let entries: Vec<_> = map.into_iter().collect();
+            assert_eq!(entries, [(2u32, "Hello"), (3u32, ", "), (5u32, "World")]);
+        }
+    }
 }
