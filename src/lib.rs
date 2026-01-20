@@ -3,6 +3,7 @@ extern crate core;
 pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 
 pub use alphabet_map::AlphabetMap;
+pub use index_map::IndexMap;
 
 pub mod alphabet_map {
     use crate::ALPHABET_COUNT;
@@ -127,25 +128,42 @@ pub mod alphabet_map {
 pub mod index_map {
     #![allow(private_bounds)]
 
-    use core::fmt;
-    use std::collections::HashMap;
+    use std::error::Error;
     use std::fmt::{Debug, Formatter};
     use std::marker::PhantomData;
 
-    trait Key: From<u8> + Default {}
-    impl<T: From<u8> + Default> Key for T {}
+    trait Key:
+        From<u8> + Default + TryFrom<usize, Error: Error> + TryInto<usize, Error: Error>
+    {
+    }
+    impl<T: From<u8> + Default + TryFrom<usize, Error: Error> + TryInto<usize, Error: Error>> Key
+        for T
+    {
+    }
 
-    #[derive(Clone, Eq, PartialEq)]
+    #[derive(Eq, PartialEq)]
     pub struct IndexMap<K: Key, V> {
         data: Vec<Option<V>>,
-        phantom_data: PhantomData<K>,
+        len: usize,
+        key_pd: PhantomData<K>,
+    }
+
+    impl<K: Key + Clone, V: Clone> Clone for IndexMap<K, V> {
+        fn clone(&self) -> Self {
+            Self {
+                data: Clone::clone(&self.data),
+                len: Clone::clone(&self.len),
+                key_pd: Clone::clone(&self.key_pd),
+            }
+        }
     }
 
     impl<K: Key, V> Default for IndexMap<K, V> {
         fn default() -> Self {
             Self {
                 data: Default::default(),
-                phantom_data: Default::default(),
+                len: Default::default(),
+                key_pd: Default::default(),
             }
         }
     }
@@ -157,12 +175,67 @@ pub mod index_map {
     }
 
     impl<K: Key, V> IndexMap<K, V> {
+        #[inline]
+        #[must_use]
         pub fn new() -> Self {
             IndexMap::<K, V>::default()
         }
 
-        fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
-            [].into_iter()
+        pub fn insert(&mut self, k: K, v: V) {
+            let k: usize = k.try_into().unwrap();
+            self.ensure_capacity(k + 1);
+            self.data[k] = Some(v);
+        }
+
+        pub fn contains(&self, k: K) -> bool {
+            let k: usize = k.try_into().unwrap();
+            self.data.len() > k && self.data[k].is_some()
+        }
+
+        pub fn get(&self, k: K) -> Option<&V> {
+            let k: usize = k.try_into().unwrap();
+            if self.data.len() > k {
+                self.data[k].as_ref()
+            } else {
+                None
+            }
+        }
+
+        pub fn get_mut(&mut self, k: K) -> Option<&mut V> {
+            let k: usize = k.try_into().unwrap();
+            if self.data.len() > k {
+                self.data[k].as_mut()
+            } else {
+                None
+            }
+        }
+
+        pub fn iter(&self) -> impl Iterator<Item = (K, &V)> {
+            self.data
+                .iter()
+                .enumerate()
+                .filter_map(|(i, v)| v.as_ref().map(|v| (i.try_into().unwrap(), v)))
+        }
+
+        #[inline]
+        pub fn values(&self) -> impl Iterator<Item = &V> {
+            self.data.iter().flatten()
+        }
+
+        #[inline]
+        pub fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
+            self.data.iter_mut().flatten()
+        }
+
+        #[inline]
+        pub fn into_values(self) -> impl Iterator<Item = V> {
+            self.data.into_iter().flatten()
+        }
+
+        fn ensure_capacity(&mut self, size: usize) {
+            if self.data.len() < size {
+                self.data.resize_with(size, || None)
+            }
         }
     }
 }
