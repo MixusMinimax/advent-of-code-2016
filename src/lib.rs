@@ -211,11 +211,8 @@ pub mod index_map {
             }
         }
 
-        pub fn iter(&self) -> impl Iterator<Item = (K, &V)> {
-            self.data
-                .iter()
-                .enumerate()
-                .filter_map(|(i, v)| v.as_ref().map(|v| (i.try_into().unwrap(), v)))
+        pub fn iter(&self) -> Iter<'_, K, V> {
+            Iter(self.data.iter(), 0, PhantomData)
         }
 
         #[inline]
