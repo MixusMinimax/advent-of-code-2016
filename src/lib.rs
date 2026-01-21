@@ -211,6 +211,17 @@ pub mod index_map {
             }
         }
 
+        #[inline]
+        pub fn len(&self) -> usize {
+            self.data.iter().flatten().count()
+        }
+
+        #[inline]
+        pub fn is_empty(&self) -> bool {
+            self.len() == 0
+        }
+
+        #[inline]
         pub fn iter(&self) -> Iter<'_, K, V> {
             Iter(self.data.iter(), 0, PhantomData)
         }
@@ -230,6 +241,7 @@ pub mod index_map {
             self.data.into_iter().flatten()
         }
 
+        #[inline]
         fn ensure_capacity(&mut self, size: usize) {
             if self.data.len() < size {
                 self.data.resize_with(size, || None)
