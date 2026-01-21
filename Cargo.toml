@@ -51,6 +51,10 @@ path = "d10/d10.rs"
 name = "d11"
 path = "d11/d11.rs"
 
+[[bin]]
+name = "d12"
+path = "d12/d12.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 #indicatif = "0.18.3"
