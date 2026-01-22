@@ -5,6 +5,8 @@ pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 pub use alphabet_map::AlphabetMap;
 pub use index_map::IndexMap;
 
+pub mod graph;
+
 pub mod alphabet_map {
     use crate::ALPHABET_COUNT;
     use std::iter::{IntoIterator, Iterator};
