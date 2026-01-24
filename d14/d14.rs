@@ -1,93 +1,98 @@
 #![feature(bstr)]
 
+use crate::hashers::{DigestHasher, KeyHasher, MultiDigestHasher};
 use itertools::Itertools;
-use md5::{Digest, Md5};
+use md5::Md5;
 use std::bstr::ByteString;
-use std::io::Write;
-use std::marker::PhantomData;
 
-trait KeyHasher {
-    fn last_input(&self) -> &[u8];
-    fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8];
-}
+mod hashers {
+    use md5::{Digest, Md5};
+    use std::io::Write;
+    use std::marker::PhantomData;
 
-struct DigestHasher<D: Digest> {
-    input_buffer: Vec<u8>,
-    salt_len: usize,
-    phantom_data: PhantomData<D>,
-}
-
-impl<D: Digest> DigestHasher<D> {
-    fn new(salt: &[u8]) -> Self {
-        Self {
-            input_buffer: salt.to_vec(),
-            salt_len: salt.len(),
-            phantom_data: PhantomData,
-        }
-    }
-}
-
-impl<D: Digest> KeyHasher for DigestHasher<D> {
-    fn last_input(&self) -> &[u8] {
-        &self.input_buffer
+    pub trait KeyHasher {
+        fn last_input(&self) -> &[u8];
+        fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8];
     }
 
-    fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8] {
-        self.input_buffer.truncate(self.salt_len);
-        write!(&mut self.input_buffer, "{}", i).unwrap();
-        base16ct::lower::encode(&Md5::digest(&self.input_buffer), out).unwrap();
-        out
-    }
-}
-
-struct MultiDigestHasher<D: Digest> {
-    input_buffer: Vec<u8>,
-    salt_len: usize,
-    repetitions: u32,
-    phantom_data: PhantomData<D>,
-}
-
-impl<D: Digest> MultiDigestHasher<D> {
-    fn new(salt: &[u8], repetitions: u32) -> Self {
-        Self {
-            input_buffer: salt.to_vec(),
-            salt_len: salt.len(),
-            phantom_data: PhantomData,
-            repetitions,
-        }
-    }
-}
-
-impl<D: Digest> KeyHasher for MultiDigestHasher<D> {
-    fn last_input(&self) -> &[u8] {
-        &self.input_buffer
+    pub struct DigestHasher<D: Digest> {
+        input_buffer: Vec<u8>,
+        salt_len: usize,
+        phantom_data: PhantomData<D>,
     }
 
-    fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8] {
-        let [mut buf_a, mut buf_b] = [[0u8; 32]; 2];
-
-        self.input_buffer.truncate(self.salt_len);
-        write!(&mut self.input_buffer, "{}", i).unwrap();
-
-        if self.repetitions != 0 {
-            base16ct::lower::encode(&Md5::digest(&self.input_buffer), &mut buf_a).unwrap();
-        }
-
-        for rep in 1..self.repetitions {
-            if rep & 1 == 1 {
-                base16ct::lower::encode(&Md5::digest(buf_a), &mut buf_b).unwrap();
-            } else {
-                base16ct::lower::encode(&Md5::digest(buf_b), &mut buf_a).unwrap();
+    impl<D: Digest> DigestHasher<D> {
+        pub fn new(salt: &[u8]) -> Self {
+            Self {
+                input_buffer: salt.to_vec(),
+                salt_len: salt.len(),
+                phantom_data: PhantomData,
             }
         }
+    }
 
-        out.copy_from_slice(if self.repetitions & 1 == 1 {
-            &buf_a
-        } else {
-            &buf_b
-        });
+    impl<D: Digest> KeyHasher for DigestHasher<D> {
+        fn last_input(&self) -> &[u8] {
+            &self.input_buffer
+        }
 
-        out
+        fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8] {
+            self.input_buffer.truncate(self.salt_len);
+            write!(&mut self.input_buffer, "{}", i).unwrap();
+            base16ct::lower::encode(&Md5::digest(&self.input_buffer), out).unwrap();
+            out
+        }
+    }
+
+    pub struct MultiDigestHasher<D: Digest> {
+        input_buffer: Vec<u8>,
+        salt_len: usize,
+        repetitions: u32,
+        phantom_data: PhantomData<D>,
+    }
+
+    impl<D: Digest> MultiDigestHasher<D> {
+        pub fn new(salt: &[u8], repetitions: u32) -> Self {
+            Self {
+                input_buffer: salt.to_vec(),
+                salt_len: salt.len(),
+                phantom_data: PhantomData,
+                repetitions,
+            }
+        }
+    }
+
+    impl<D: Digest> KeyHasher for MultiDigestHasher<D> {
+        fn last_input(&self) -> &[u8] {
+            &self.input_buffer
+        }
+
+        fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8] {
+            let [mut buf_a, mut buf_b] = [[0u8; 32]; 2];
+
+            self.input_buffer.truncate(self.salt_len);
+            write!(&mut self.input_buffer, "{}", i).unwrap();
+
+            if self.repetitions != 0 {
+                base16ct::lower::encode(&Md5::digest(&self.input_buffer), &mut buf_a).unwrap();
+            }
+
+            for rep in 1..self.repetitions {
+                if rep & 1 == 1 {
+                    base16ct::lower::encode(&Md5::digest(buf_a), &mut buf_b).unwrap();
+                } else {
+                    base16ct::lower::encode(&Md5::digest(buf_b), &mut buf_a).unwrap();
+                }
+            }
+
+            out.copy_from_slice(if self.repetitions & 1 == 1 {
+                &buf_a
+            } else {
+                &buf_b
+            });
+
+            out
+        }
     }
 }
 
