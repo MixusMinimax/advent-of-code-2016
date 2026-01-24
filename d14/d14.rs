@@ -68,28 +68,21 @@ mod hashers {
         }
 
         fn hash_hex<'b>(&mut self, i: u64, out: &'b mut [u8]) -> &'b [u8] {
-            let [mut buf_a, mut buf_b] = [[0u8; 32]; 2];
+            let mut buf = [0u8; 32];
 
             self.input_buffer.truncate(self.salt_len);
             write!(&mut self.input_buffer, "{}", i).unwrap();
 
             if self.repetitions != 0 {
-                base16ct::lower::encode(&Md5::digest(&self.input_buffer), &mut buf_a).unwrap();
+                base16ct::lower::encode(&Md5::digest(&self.input_buffer), &mut buf).unwrap();
             }
 
-            for rep in 1..self.repetitions {
-                if rep & 1 == 1 {
-                    base16ct::lower::encode(&Md5::digest(buf_a), &mut buf_b).unwrap();
-                } else {
-                    base16ct::lower::encode(&Md5::digest(buf_b), &mut buf_a).unwrap();
-                }
+            for _ in 1..self.repetitions {
+                let h = Md5::digest(buf);
+                base16ct::lower::encode(&h, &mut buf).unwrap();
             }
 
-            out.copy_from_slice(if self.repetitions & 1 == 1 {
-                &buf_a
-            } else {
-                &buf_b
-            });
+            out.copy_from_slice(&buf);
 
             out
         }
