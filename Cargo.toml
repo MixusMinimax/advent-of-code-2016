@@ -59,8 +59,13 @@ path = "d12/d12.rs"
 name = "d13"
 path = "d13/d13.rs"
 
+[[bin]]
+name = "d14"
+path = "d14/d14.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
+base16ct = { version = "1.0.0", features = ["alloc"] }
 #indicatif = "0.18.3"
 itertools = "0.14.0"
 lazy_static = "1.5.0"

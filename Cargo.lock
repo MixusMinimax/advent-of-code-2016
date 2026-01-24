@@ -6,6 +6,7 @@ version = 4
 name = "advent-of-code-2016"
 version = "0.1.0"
 dependencies = [
+ "base16ct",
  "itertools",
  "lazy_static",
  "md-5",
@@ -22,6 +23,12 @@ checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
 dependencies = [
  "memchr",
 ]
+
+[[package]]
+name = "base16ct"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd307490d624467aa6f74b0eabb77633d1f758a7b25f12bceb0b22e08d9726f6"
 
 [[package]]
 name = "block-buffer"
