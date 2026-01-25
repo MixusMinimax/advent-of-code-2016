@@ -1,7 +1,7 @@
-use aoc2016::graph::a_star_rev;
+use aoc2016::graph::bfs;
 use md5::{Digest, Md5};
 use nom::FindSubstring;
-use vecmath::{vec2_add, vec2_sub};
+use vecmath::vec2_add;
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 struct State {
@@ -9,20 +9,20 @@ struct State {
     path_taken: String,
 }
 
-fn get_shortest_path(input: &str) -> State {
-    a_star_rev(
-        &State {
+fn get_all_paths(input: &str) -> impl IntoIterator<Item = State> {
+    bfs(
+        State {
             pos: [0, 0],
             path_taken: String::new(),
         },
         |s| s.pos == [3, 3],
-        |s| {
+        move |s| {
             let hash =
                 base16ct::lower::encode_string(&Md5::digest(format!("{}{}", input, s.path_taken)));
             ['U', 'D', 'L', 'R']
                 .into_iter()
                 .enumerate()
-                .filter(|&(index, _)| "abcdef".find_substring(&hash[index..index + 1]).is_some())
+                .filter(|&(index, _)| "bcdef".find_substring(&hash[index..index + 1]).is_some())
                 .map(|(_, d)| d)
                 .filter(|&d| match d {
                     'U' => s.pos[1] != 0,
@@ -44,23 +44,32 @@ fn get_shortest_path(input: &str) -> State {
                             _ => unreachable!(),
                         },
                     );
-                    (s, d)
+                    s
                 })
                 .collect::<Vec<_>>()
         },
-        |s| {
-            let v = vec2_sub(s.pos, [3, 3]);
-            (v[0].abs() + v[1].abs()) as i64
-        },
-        |_, _, _| 1,
     )
-    .unwrap()
-    .1
+}
+
+fn get_shortest_path(input: &str) -> State {
+    get_all_paths(input).into_iter().next().unwrap()
+}
+
+fn get_longest_path(input: &str) -> State {
+    get_all_paths(input)
+        .into_iter()
+        .max_by_key(|s| s.path_taken.len())
+        .unwrap()
 }
 
 fn main() {
-    let p = get_shortest_path("qtetzkpl");
-    println!("{p:?}");
+    let input = "qtetzkpl";
+
+    let p = get_shortest_path(input);
+    println!("Part1: {p:?}");
+
+    let p = get_longest_path(input);
+    println!("Part2: {}", p.path_taken.len());
 }
 
 #[cfg(test)]
@@ -75,5 +84,12 @@ mod tests {
             get_shortest_path("ulqzkmiv").path_taken,
             "DRURDRUDDLLDLUURRDULRLDUUDDDRR"
         );
+    }
+
+    #[test]
+    fn test_get_longest_path() {
+        assert_eq!(get_longest_path("ihgpwlah").path_taken.len(), 370);
+        assert_eq!(get_longest_path("kglvqrro").path_taken.len(), 492);
+        assert_eq!(get_longest_path("ulqzkmiv").path_taken.len(), 830);
     }
 }

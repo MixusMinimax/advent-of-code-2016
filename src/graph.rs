@@ -1,6 +1,8 @@
 pub use a_star::NoPathFound;
 pub use a_star::a_star_rev;
 
+pub use bfs_impl::bfs;
+
 mod a_star {
     use std::collections::{HashMap, HashSet};
     use std::fmt::Formatter;
@@ -115,5 +117,83 @@ mod a_star {
             let path: Vec<usize> = result.iter().rev().map(|(n, _)| *n).chain([goal]).collect();
             assert_eq!(path, vec![0, 5, 2]);
         }
+    }
+}
+
+mod bfs_impl {
+    use std::collections::{HashSet, VecDeque};
+    use std::hash::Hash;
+
+    trait INode: Clone + Hash + Eq {}
+    impl<T: Clone + Hash + Eq> INode for T {}
+
+    struct BfsIter<
+        Node: INode,
+        IsGoal: Fn(&Node) -> bool,
+        Neighbors: IntoIterator<Item = Node>,
+        GetNeighbors: Fn(&Node) -> Neighbors,
+    > {
+        explored_set: HashSet<Node>,
+        frontier: VecDeque<Node>,
+        is_goal: IsGoal,
+        get_neighbors: GetNeighbors,
+    }
+
+    impl<
+        Node: INode,
+        IsGoal: Fn(&Node) -> bool,
+        Neighbors: IntoIterator<Item = Node>,
+        GetNeighbors: Fn(&Node) -> Neighbors,
+    > BfsIter<Node, IsGoal, Neighbors, GetNeighbors>
+    {
+        fn new(start: Node, is_goal: IsGoal, get_neighbors: GetNeighbors) -> Self {
+            Self {
+                explored_set: HashSet::from([start.clone()]),
+                frontier: VecDeque::from([start]),
+                is_goal,
+                get_neighbors,
+            }
+        }
+    }
+
+    impl<
+        Node: INode,
+        IsGoal: Fn(&Node) -> bool,
+        Neighbors: IntoIterator<Item = Node>,
+        GetNeighbors: Fn(&Node) -> Neighbors,
+    > Iterator for BfsIter<Node, IsGoal, Neighbors, GetNeighbors>
+    {
+        type Item = Node;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            while let Some(current) = self.frontier.pop_front() {
+                if (self.is_goal)(&current) {
+                    return Some(current);
+                }
+                for n in (self.get_neighbors)(&current) {
+                    if self.explored_set.contains(&n) {
+                        continue;
+                    }
+                    self.explored_set.insert(n.clone());
+                    self.frontier.push_back(n);
+                }
+            }
+
+            None
+        }
+    }
+
+    #[allow(private_bounds)]
+    pub fn bfs<
+        Node: INode,
+        IsGoal: Fn(&Node) -> bool,
+        Neighbors: IntoIterator<Item = Node>,
+        GetNeighbors: Fn(&Node) -> Neighbors,
+    >(
+        start: Node,
+        is_goal: IsGoal,
+        get_neighbors: GetNeighbors,
+    ) -> impl IntoIterator<Item = Node> {
+        BfsIter::new(start, is_goal, get_neighbors)
     }
 }
