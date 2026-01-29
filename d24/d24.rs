@@ -144,9 +144,9 @@ impl Graph {
     }
 }
 
-fn solve_tsp(graph: Graph) -> i32 {
+fn solve_tsp(graph: &Graph, include_return: bool) -> i32 {
     tsp(graph.maze.waypoints.len() as u16, |a, b| {
-        if b == 0 {
+        if !include_return && b == 0 {
             return 0;
         }
         graph.distances[[a, b]]
@@ -158,6 +158,9 @@ fn main() {
     let input = include_str!("d24.txt");
     let maze = from_lines(input.lines());
     let graph = Graph::new(maze);
-    let shortest_path = solve_tsp(graph);
+    let shortest_path = solve_tsp(&graph, false);
     println!("Part1: {}", shortest_path);
+
+    let shortest_path = solve_tsp(&graph, true);
+    println!("Part2: {}", shortest_path);
 }
