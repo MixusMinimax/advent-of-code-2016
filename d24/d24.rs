@@ -5,8 +5,8 @@
 //! Then, create a higher-level graph where the edges are the distance between nodes.
 //! On this path, we can then apply the traveling salesman problem.
 
-use aoc2016::graph::a_star_rev;
-use aoc2016::vec2_hamming_dist;
+use aoc2016::graph::{a_star_rev, tsp};
+use aoc2016::{SymmetricalMatrix, vec2_hamming_dist};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Write};
 use std::iter::once;
@@ -125,9 +125,39 @@ fn shortest_path(maze: &Maze, from: [i32; 2], to: [i32; 2]) -> Vec<Vector2<i32>>
     path.into_iter().map(|(p, _)| p).rev().chain([to]).collect()
 }
 
+struct Graph {
+    maze: Maze,
+    distances: SymmetricalMatrix<i32>,
+}
+
+impl Graph {
+    fn new(maze: Maze) -> Self {
+        let c = maze.waypoints.len();
+        let mut distances = SymmetricalMatrix::new(c);
+        for a in 0..c - 1 {
+            for b in a + 1..c {
+                distances[[a, b]] =
+                    shortest_path(&maze, maze.waypoints[a], maze.waypoints[b]).len() as i32 - 1;
+            }
+        }
+        Graph { maze, distances }
+    }
+}
+
+fn solve_tsp(graph: Graph) -> i32 {
+    tsp(graph.maze.waypoints.len() as u16, |a, b| {
+        if b == 0 {
+            return 0;
+        }
+        graph.distances[[a, b]]
+    })
+}
+
 fn main() {
+    // let input = include_str!("d24.sample.txt");
     let input = include_str!("d24.txt");
     let maze = from_lines(input.lines());
-    let p = shortest_path(&maze, maze.waypoints[0], maze.waypoints[1]);
-    println!("{p:?}");
+    let graph = Graph::new(maze);
+    let shortest_path = solve_tsp(graph);
+    println!("Part1: {}", shortest_path);
 }

@@ -4,6 +4,7 @@ pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 
 pub use alphabet_map::AlphabetMap;
 pub use index_map::IndexMap;
+pub use lin_alg::SymmetricalMatrix;
 pub use vec_math_ext::vec2_hamming_dist;
 
 pub mod graph;
@@ -381,6 +382,74 @@ mod vec_math_ext {
         fn test_hamming_dist() {
             assert_eq!(vec2_hamming_dist::<i32>([5, 7], [-1, 2]), 11i32);
             assert_eq!(vec2_hamming_dist::<u32>([5, 7], [7, 2]), 7u32);
+        }
+    }
+}
+
+mod lin_alg {
+    use num_traits::ToPrimitive;
+    use std::cmp::{max, min};
+    use std::ops::{Index, IndexMut};
+
+    #[derive(Clone, Eq, PartialEq, Debug, Default)]
+    pub struct SymmetricalMatrix<T> {
+        data: Vec<T>,
+        size: usize,
+    }
+
+    impl<T: Default + Clone> SymmetricalMatrix<T> {
+        pub fn new(size: usize) -> Self {
+            Self {
+                data: vec![T::default(); size * (size + 1) / 2],
+                size,
+            }
+        }
+    }
+
+    #[inline]
+    fn idx(size: usize, [x, y]: [impl ToPrimitive; 2]) -> usize {
+        let x = x.to_usize().unwrap();
+        let y = y.to_usize().unwrap();
+        let [x, y] = [max(x, y), min(x, y)];
+        y * size - if y == 0 { 0 } else { y * (y - 1) / 2 } + x - y
+    }
+
+    impl<T, S: ToPrimitive> Index<[S; 2]> for SymmetricalMatrix<T> {
+        type Output = T;
+
+        fn index(&self, index: [S; 2]) -> &Self::Output {
+            let i = idx(self.size, index);
+            &self.data[i]
+        }
+    }
+
+    impl<T, S: ToPrimitive> IndexMut<[S; 2]> for SymmetricalMatrix<T> {
+        fn index_mut(&mut self, index: [S; 2]) -> &mut Self::Output {
+            let i = idx(self.size, index);
+            &mut self.data[i]
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_idx() {
+            assert_eq!(idx(5, [2, 1]), 6);
+            assert_eq!(idx(5, [1, 2]), 6);
+            assert_eq!(idx(5, [0, 0]), 0);
+            assert_eq!(idx(5, [4, 4]), 14);
+        }
+
+        #[test]
+        fn test_matrix() {
+            let mut mat = SymmetricalMatrix::new(5);
+            mat[[0, 4]] = 69;
+            mat[[1, 1]] = 5;
+            assert_eq!(mat[[0, 4]], 69);
+            assert_eq!(mat[[4, 0]], 69);
+            assert_eq!(mat[[1, 1]], 5);
         }
     }
 }
