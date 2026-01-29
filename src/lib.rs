@@ -4,7 +4,7 @@ pub const ALPHABET_COUNT: usize = (b'z' - b'a') as usize + 1;
 
 pub use alphabet_map::AlphabetMap;
 pub use index_map::IndexMap;
-use num_traits::PrimInt;
+pub use vec_math_ext::vec2_hamming_dist;
 
 pub mod graph;
 
@@ -366,17 +366,21 @@ pub mod index_map {
     }
 }
 
-pub fn vec2_hamming_dist<S: PrimInt>([a0, a1]: [S; 2], [b0, b1]: [S; 2]) -> S {
-    (if a0 > b0 { a0 - b0 } else { b0 - a0 }) + (if a1 > b1 { a1 - b1 } else { b1 - a1 })
-}
+mod vec_math_ext {
+    use num_traits::PrimInt;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+    pub fn vec2_hamming_dist<S: PrimInt>([a0, a1]: [S; 2], [b0, b1]: [S; 2]) -> S {
+        (if a0 > b0 { a0 - b0 } else { b0 - a0 }) + (if a1 > b1 { a1 - b1 } else { b1 - a1 })
+    }
 
-    #[test]
-    fn test_hamming_dist() {
-        assert_eq!(vec2_hamming_dist::<i32>([5, 7], [-1, 2]), 11i32);
-        assert_eq!(vec2_hamming_dist::<u32>([5, 7], [7, 2]), 7u32);
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_hamming_dist() {
+            assert_eq!(vec2_hamming_dist::<i32>([5, 7], [-1, 2]), 11i32);
+            assert_eq!(vec2_hamming_dist::<u32>([5, 7], [7, 2]), 7u32);
+        }
     }
 }

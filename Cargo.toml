@@ -99,6 +99,10 @@ path = "d22/d22.rs"
 name = "d23"
 path = "d23/d23.rs"
 
+[[bin]]
+name = "d24"
+path = "d24/d24.rs"
+
 [dependencies]
 #anyhow = "1.0.100"
 base16ct = { version = "1.0.0", features = ["alloc"] }
